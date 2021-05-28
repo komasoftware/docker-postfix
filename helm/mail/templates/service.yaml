@@ -19,6 +19,5 @@ spec:
       targetPort: smtp
       protocol: TCP
       name: smtp
-  loadBalancerIP: 172.16.0.250
   selector:
     {{- $selectorLabels | nindent 4 }}
