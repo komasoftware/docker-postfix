@@ -13,10 +13,12 @@ metadata:
     {{- with .Values.service.annotations }}{{ toYaml . | nindent 4 }}{{ end }}
 spec:
   type: {{ .Values.service.type }}
+  {{- with .Values.service.spec }}{{ toYaml . | nindent 2 }}{{ end }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: smtp
       protocol: TCP
       name: smtp
+  loadBalancerIP: 172.16.0.250
   selector:
     {{- $selectorLabels | nindent 4 }}
