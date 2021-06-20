@@ -159,6 +159,7 @@ To change the log format, set the (unsurprisingly named) variable `LOG_FORMAT=js
 ### Postfix-specific options
 
 * `RELAYHOST` = Host that relays your messages
+* `SASL_RELAYHOST` = (optional) Relay Host referenced in the `sasl_passwd` file. Defaults to the value of `RELAYHOST`
 * `RELAYHOST_USERNAME` = An (optional) username for the relay server
 * `RELAYHOST_PASSWORD` = An (optional) login password for the relay server
 * `RELAYHOST_PASSWORD_FILE` = An (optional) file containing the login password for the relay server. Mutually exclusive with the previous option.
@@ -478,6 +479,7 @@ Chart configuration is as follows:
 | `extraVolumeMounts` | `[]` | Append any extra volume mounts to the postfix container |
 | `extraInitContainers` | `[]` | Execute any extra init containers on startup |
 | `extraEnv` | `[]` | Add any extra environment variables to the container |
+| `extraContainers` | `[]` | Add extra containers |
 | `deployment.labels` | `{}` | Additional labels for the statefulset |
 | `deployment.annotations` | `{}` | Additional annotations for the statefulset |
 | `pod.securityContext` | `{}` | Pods's [security context](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) |
@@ -493,6 +495,7 @@ Chart configuration is as follows:
 | `persistence.existingClaim` | `""` | Provide an existing `PersistentVolumeClaim`, the value is evaluated as a template. |
 | `persistence.size` | `1Gi` | Storage size |
 | `persistence.storageClass` | `""` | Storage class |
+| `recreateOnRedeploy` | `true` | Restart Pods on every helm deployment, to prevent issues with stale configuration(s). |
 
 ## Extending the image
 

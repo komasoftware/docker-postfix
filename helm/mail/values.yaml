@@ -21,6 +21,16 @@ service:
   annotations: {}
   # nodePort:
 
+# Tell helm to restart (recreate) pods on every deploy. Setting this to true will inject
+# `date/deploy-date: <timestamp>` annotation into pod specification for StateFulset. This
+# ensures that the Pod is recreated with the new changes.
+#
+# Feel free to disable this but doing so **IS IT YOUR OWN RISK**. By disabling this feature
+# you might run into issues where some changes are not reflected on the Pod. If you experience
+# this with this setting set to `false` the first thing to try out is to restart / delete
+# a pod and let `StatefulSet` recreate it.
+recreateOnRedeploy: true
+
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -49,6 +59,7 @@ extraVolumes: []
 extraVolumeMounts: []
 extraInitContainers: []
 extraEnv: []
+extraContainers: []
 
 deployment:
   labels: {}
@@ -89,6 +100,7 @@ config:
     # ALLOW_EMPTY_SENDER_DOMAINS:
     # LOG_FORMAT:
     # RELAYHOST:
+    # SASL_RELAYHOST: # when specified overwrites the RELAYHOST in the sasl_passwd file
     # RELAYHOST_USERNAME:
     # RELAYHOST_PASSWORD:
     # MASQUERADED_DOMAINS:
@@ -111,7 +123,6 @@ persistence:
   size: 1Gi
   storageClass: ""
 
-
 readinessProbe:
   initialDelaySeconds: 10
   periodSeconds: 60
@@ -120,7 +131,9 @@ readinessProbe:
     command:
       - sh
       - -c
-      - 'printf "EHLO healthcheck\n" | nc 127.0.0.1 587 | grep -qE "^220.*ESMTP Postfix"'
+      - >-
+        [ ! -f /tmp/container_is_terminating ] &&
+        printf "EHLO healthcheck\n" | nc 127.0.0.1 587 | grep -qE "^220.*ESMTP Postfix"
 livenessProbe:
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -132,6 +145,7 @@ livenessProbe:
       - >-
         ps axf | fgrep -v grep | egrep -q '\{supervisord\}|/usr/bin/supervisord' &&
         ps axf | fgrep -v grep | egrep -q '(/usr/lib/postfix/sbin/|/usr/libexec/postfix/)master'
+
 startupProbe:
   initialDelaySeconds: 5
   periodSeconds: 5
@@ -144,3 +158,6 @@ startupProbe:
         ps axf | fgrep -v grep | egrep -q '\{supervisord\}|/usr/bin/supervisord' &&
         ps axf | fgrep -v grep | fgrep -q "postfix-script" &&
         ps axf | fgrep -v grep | fgrep -q 'opendkim.sh'
+
+lifecycle:
+  postStart: {}

@@ -55,7 +55,9 @@ reown_folders() {
 	chown root: /var/spool/postfix/pid
 
 	do_postconf -e "manpage_directory=/usr/share/man"
-	postfix -c /etc/postfix/ set-permissions || true
+
+	# postfix set-permissions complains if documentation files do not exist
+	postfix -c /etc/postfix/ set-permissions > /dev/null 2>&1 || true
 }
 
 postfix_upgrade_conf() {
@@ -168,15 +170,20 @@ postfix_setup_relayhost() {
 
 		file_env 'RELAYHOST_PASSWORD'
 
+		# Allow to overwrite RELAYHOST in the sasl_passwd file with SASL_RELAYHOST variable if specified
+		if [ -z "$SASL_RELAYHOST" ]; then
+			SASL_RELAYHOST=$RELAYHOST
+		fi
+
 		if [ -n "$RELAYHOST_USERNAME" ] && [ -n "$RELAYHOST_PASSWORD" ]; then
 			echo -e " using username ${emphasis}$RELAYHOST_USERNAME${reset} and password ${emphasis}(redacted)${reset}."
 			if [[ -f /etc/postfix/sasl_passwd ]]; then
-				if ! grep -F "$RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" /etc/postfix/sasl_passwd; then
-					sed -i -e "s/^$RELAYHOST .*$/d" /etc/postfix/sasl_passwd
-					echo "$RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" >> /etc/postfix/sasl_passwd
+				if ! grep -F "$SASL_RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" /etc/postfix/sasl_passwd; then
+					sed -i -e "s/^$SASL_RELAYHOST .*$/d" /etc/postfix/sasl_passwd
+					echo "$SASL_RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" >> /etc/postfix/sasl_passwd
 				fi
 			else
-				echo "$RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" >> /etc/postfix/sasl_passwd
+				echo "$SASL_RELAYHOST $RELAYHOST_USERNAME:$RELAYHOST_PASSWORD" >> /etc/postfix/sasl_passwd
 			fi
 			postmap lmdb:/etc/postfix/sasl_passwd
 			chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.lmdb
